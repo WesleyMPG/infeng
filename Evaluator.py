@@ -15,13 +15,13 @@ def asking(value):
             print('Invalid entry. Try again.')
 
 class Evaluator(object):
-    def __init__(self, values_table, asking_function=asking):
+    def __init__(self, values_table, asking_function=None):
         self.var_stack = []
         self.op_stack = []
         self.scanner = Scanner()
         self.parser = Parser()
         self.values_table = values_table
-        self.ask_for = asking_function
+        self.ask_for = asking_function if asking_function is not None else asking
 
     def __push_operator(self, op):
         self.op_stack.append(op)

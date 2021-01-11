@@ -7,10 +7,10 @@ from .Evaluator import Evaluator
 
 
 class Engine(object):
-    def __init__(self, knowledge_file_path):
+    def __init__(self, knowledge_file_path, asking_function=None):
         self.knowledge_base = []
         self.values_table = {}
-        self.evaluator = Evaluator(self.values_table)
+        self.evaluator = Evaluator(self.values_table, asking_function)
         self.load_knowledge(knowledge_file_path)
 
     def __load_file_content(self, file):
