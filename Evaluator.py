@@ -1,26 +1,46 @@
-from infeng.scanner import tokens, Scanner
-from infeng.parser import Parser
-from .Value import Value
+import sys, re
+
+if 'infeng' in sys.modules:
+    from infeng.scanner import tokens, Scanner
+    from infeng.parser import Parser
+    from .Value import Value
+else:
+    from scanner import tokens, Scanner
+    from parser import Parser
+    from Value import Value
+
 
 def asking(value):
     while True:
-        i = input(f'What is the value of {value.name}? ').lower()
-        if i[0] == 't':
+        v = input(f'What is the value of {value.name}?\n').lower()
+        if v[0] == 't':
             value.value = True
-            return
-        elif i[0] == 'f':
+            break
+        elif v[0] == 'f':
             value.value = False
+            break
+        else:
+            print('Invalid entry. Try again.')
+    while True:
+        c = input(f'And the confidence about it?\n').lower()
+        found = re.match(r'^\d{1,2}([\.,]\d+)?$|^100$', c)
+        if found is not None:
+            if ',' in c:
+                c = c.replace(',', '.')
+            value.confidence = float(c)
             return
         else:
             print('Invalid entry. Try again.')
 
 class Evaluator(object):
-    def __init__(self, values_table, asking_function=None):
+    def __init__(self, values_table, asking_function=None,
+                 debug=False):
         self.var_stack = []
         self.op_stack = []
         self.scanner = Scanner()
         self.parser = Parser()
         self.values_table = values_table
+        self.debug = debug
         self.ask_for = asking_function if asking_function is not None else asking
 
     def __push_operator(self, op):
@@ -35,16 +55,27 @@ class Evaluator(object):
     def __pop_var(self):
         return self.var_stack.pop()
 
+    def rule_of_three(self, given, expected):
+        return given* expected / 100
+
     def __resolve_value(self, value):
         """It looks for value.name on the right side of rules
 
         If value.name is found on right side of a rule, it evaluates
         that rule, else asks for the value
         """
-        result = None
         rules = value.is_right_side_in_rules
         if len(rules) > 0:
-            value.value = self.evaluate(rules[0].left)
+            best_rule = rules[0]
+            for i in range(1, len(rules)):
+                if rules[i].confidence > best_rule.confidence:
+                    best_rule = rules[i]
+            result = self.evaluate(best_rule.left)
+            value.value = result[0]
+            value.confidence = self.rule_of_three(result[1],
+                                                  best_rule.confidence)
+            if self.debug:
+                print(f'{value.name}: {value.value}, {value.confidence}')
         else:
             self.ask_for(value)
 
@@ -68,6 +99,7 @@ class Evaluator(object):
         if var_value.value == Value.NULL:
             self.__resolve_value(var_value)
         exp_value.value = not var_value.value
+        exp_value.confidence = 100 - exp_value.confidence
         return exp_value
 
     def __solve_not(self):
@@ -98,22 +130,31 @@ class Evaluator(object):
         """
         if val1.value == Value.NULL:
             self.__resolve_value(val1)
-            if val1.value == True: return True
         if val2.value == Value.NULL:
             self.__resolve_value(val2)
-            if val2.value == True: return True
-        return val1.value or val2.value
+        if val1.value and val2.value:
+            max(val1.confidence, val2.confidence)
+            return True, max(val1.confidence, val2.confidence)
+        elif val1.value:
+            return True, val1.confidence
+        elif val2.value:
+            return True, val2.confidence
+        else:
+            confidence = min(val1.confidence, val2.confidence)
+            return False, 100 - confidence
 
     def __do_and(self, val1, val2):
         """It executes and operation
         """
         if val1.value == Value.NULL:
             self.__resolve_value(val1)
-            if val1.value == False: return False
         if val2.value == Value.NULL:
             self.__resolve_value(val2)
-            if val2.value == False: return False
-        return val1.value and val2.value
+        if val1.value and val2.value:
+            return True, min(val1.confidence, val2.confidence)
+        else:
+            confidence = max(val1.confidence, val2.confidence)
+            return False, 100 - confidence
 
     def __do_and_or(self, val1, val2, op):
         """This determinates the operation to be executed between two values
@@ -134,7 +175,9 @@ class Evaluator(object):
         exp_value = self.__register_and_or_exp_on_table(var1, var2, op)
         v1_value = self.values_table[var1[0]]
         v2_value = self.values_table[var2[0]]
-        exp_value.value = self.__do_and_or(v1_value, v2_value, op)
+        result = self.__do_and_or(v1_value, v2_value, op)
+        exp_value.value = result[0]
+        exp_value.confidence = result[1]
 
     def __solve_and_or(self, operator):
         var1 = self.__pop_var()
@@ -150,7 +193,7 @@ class Evaluator(object):
         value = self.values_table[var]
         if value.value == Value.NULL:
             self.__resolve_value(value)
-        return value.value
+        return value.value, value.confidence
 
     def _evaluate(self, queue):
         current = queue.pop(0)

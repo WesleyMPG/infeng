@@ -1,4 +1,9 @@
-from infeng.scanner import tokens
+import sys
+
+if 'infeng' in sys.modules:
+    from infeng.scanner import tokens
+else:
+    from scanner import tokens
 
 class Parser(object):
     pritority = {
