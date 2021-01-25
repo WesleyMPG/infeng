@@ -4,7 +4,7 @@ Simple python based inference engine
 
 ## Usage
 
-To use it as a module clone "as_module" branch.
+To use it as a module checkout to "as_module" branch.
 
 Create a knowledge base json file formated like:
 ```json
