@@ -1,4 +1,4 @@
 from Engine import Engine
 
-eng = Engine('knowledge_base.json')
-print(eng.evaluate('F'))
+eng = Engine('knowledge_base.json', debug=True)
+print(eng.evaluate('I'))

@@ -4,9 +4,11 @@ class Value(object):
     """
     NULL = ''
 
-    def __init__(self, name, description='None', value=''):
+    def __init__(self, name, description='None',
+                 value='', confidence=100):
         self.name = name
         self.value = value
+        self.confidence = confidence
         self.is_right_side_in_rules = []
         self.description = description
 

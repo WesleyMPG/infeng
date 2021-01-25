@@ -1,10 +1,10 @@
 {
 	"description": {
 
-		"A": true,
+		"A": [true, 70],
 		"B": "It's raining",
-		"C": true,
-		"D": [false, "I'm going in a car"],
+		"C": [true, 87],
+		"D": [false, 35, "I'm going in a car"],
     "E": "",
     "F": "",
     "G": "",
@@ -14,11 +14,11 @@
 	},
 
 	"rules": [
-    ["A and B and C", "H"],
-    ["(C and B) or G", "I"],
-		["A and B", "E"],
-		["E or B", "F"],
-		["E or !B", "G"]
+    ["A and B and C", "H", 75],
+    ["(C and B) or G", "I", 85],
+		["A and B", "E", 73],
+		["E or B", "F", 90],
+		["E or D", "G", 87]
 	]
 
 }
