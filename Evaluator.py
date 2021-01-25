@@ -71,7 +71,7 @@ class Evaluator(object):
         return exp_value
 
     def __solve_not(self):
-        """Checks if !A is already solved else solve it.
+        """Checks if !A is already solved else solves it.
         """
         var = self.__pop_var()
         expression = var[0] + '!'
